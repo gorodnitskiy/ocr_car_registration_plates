@@ -5,7 +5,7 @@ from torch.nn import Module, Sequential, Conv2d, AvgPool2d, GRU, Linear
 from torchvision import models
 
 
-def pred_to_string(pred, abc):
+def prediction_to_string(pred, abc):
     seq = []
     for i in range(len(pred)):
         label = np.argmax(pred[i])
@@ -26,11 +26,11 @@ def decode(pred, abc):
     pred = pred.permute(1, 0, 2).cpu().data.numpy()
     outputs = []
     for i in range(len(pred)):
-        outputs.append(pred_to_string(pred[i], abc))
+        outputs.append(prediction_to_string(pred[i], abc))
     return outputs
 
 
-class FeatureExtractor(Module):
+class ConvFeatureExtractor(Module):
     def __init__(self, input_size=(64, 320), output_len=20):
         super().__init__()
 
@@ -66,9 +66,9 @@ class FeatureExtractor(Module):
         return features
 
 
-class SequencePredictor(Module):
+class GRUSequencePredictor(Module):
     def __init__(self, input_size, hidden_size, num_layers, num_classes, dropout=0.3, bidirectional=False):
-        super(SequencePredictor, self).__init__()
+        super().__init__()
 
         self.num_classes = num_classes
         self.rnn = GRU(input_size=input_size,
@@ -110,17 +110,17 @@ class SequencePredictor(Module):
         return x
 
 
-class CRNN(Module):
+class CRNNModel(Module):
     def __init__(self, alphabet,
                  cnn_input_size=(64, 320), cnn_output_len=20,
                  rnn_hidden_size=128, rnn_num_layers=2,
                  rnn_dropout=0.3, rnn_bidirectional=False):
         super().__init__()
         self.alphabet = alphabet
-        self.features_extractor = FeatureExtractor(
+        self.features_extractor = ConvFeatureExtractor(
             input_size=cnn_input_size,
             output_len=cnn_output_len)
-        self.sequence_predictor = SequencePredictor(
+        self.sequence_predictor = GRUSequencePredictor(
             input_size=self.features_extractor.num_output_features,
             hidden_size=rnn_hidden_size,
             num_layers=rnn_num_layers,

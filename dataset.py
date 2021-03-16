@@ -124,6 +124,21 @@ def collate_fn(batch):
     """Function for torch.utils.data.Dataloader for batch collecting.
     Accepts list of dataset __get_item__ return values (dicts).
     Returns dict with same keys but values are either torch.Tensors of batched images, sequences, and so.
+
+    Текст номеров может иметь длину 8 (LDDDLLDD) или 9 (LDDDLLDDD).
+    Класс DataLoader плохо справляется (из коробки) с данными переменного размера,
+    поэтому будем использовать такую реализацию collate_fn.
+
+    Можно посмотреть глазами, что все ок так (что в батчах будут номера только с одной маской):
+    xs = [dataset[i] for i in range(4)]
+    batch = collate_fn(xs)
+    print(batch.keys())
+
+    print("Image:", batch["image"].size())
+    print("Seq:", batch["seq"].size())
+    print("Seq:", batch["seq"])
+    print("Seq_len:", batch["seq_len"])
+    print("Text:", batch["text"])
     """
     images, seqs, seq_lens, texts = [], [], [], []
     for sample in batch:
@@ -138,7 +153,7 @@ def collate_fn(batch):
     return batch
 
 
-class RecognitionDataset(Dataset):
+class RecognitionCarPlatesDataset(Dataset):
     """Class for training image-to-text mapping using CTC-Loss."""
 
     def __init__(self, config, alphabet=ALPHABET_MASK, transforms=None):
