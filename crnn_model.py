@@ -31,12 +31,12 @@ def decode(pred, abc):
 
 
 class ConvFeatureExtractor(Module):
-    def __init__(self, input_size=(64, 320), output_len=20):
+    def __init__(self, model_name, input_size=(64, 320), output_len=20):
         super().__init__()
 
         h, w = input_size
-        resnet = getattr(models, 'resnet18')(pretrained=True)
-        self.cnn = Sequential(*list(resnet.children())[:-2])
+        model = getattr(models, model_name)(pretrained=True)
+        self.cnn = Sequential(*list(model.children())[:-2])
 
         self.pool = AvgPool2d(kernel_size=(h // 32, 1))
         self.proj = Conv2d(w // 32, output_len, kernel_size=1)
@@ -111,13 +111,14 @@ class GRUSequencePredictor(Module):
 
 
 class CRNNModel(Module):
-    def __init__(self, alphabet,
+    def __init__(self, model_conv, alphabet,
                  cnn_input_size=(64, 320), cnn_output_len=20,
                  rnn_hidden_size=128, rnn_num_layers=2,
                  rnn_dropout=0.3, rnn_bidirectional=False):
         super().__init__()
         self.alphabet = alphabet
         self.features_extractor = ConvFeatureExtractor(
+            model_name=model_conv,
             input_size=cnn_input_size,
             output_len=cnn_output_len)
         self.sequence_predictor = GRUSequencePredictor(
